@@ -1,0 +1,16 @@
+{
+  "name": "orca-dock-containers",
+  "private": true,
+  "type": "module",
+  "description": "Dev tools only. The plugin itself has no dependencies and no build step.",
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "orca plugin test .",
+    "validate": "orca plugin validate .",
+    "dev": "orca plugin dev watch ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
