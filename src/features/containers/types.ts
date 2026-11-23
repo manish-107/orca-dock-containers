@@ -14,6 +14,9 @@ export type ContainerSummary = {
 
 export type ContainerAction = 'start' | 'stop' | 'restart'
 
+/** Right-click on a Compose project group. `down` removes its containers and networks, not volumes. */
+export type ComposeAction = 'start' | 'stop' | 'restart' | 'down'
+
 declare module 'orca' {
   interface PluginRequests {
     'containers.list': { output: { containers: ContainerSummary[] } }
@@ -24,6 +27,10 @@ declare module 'orca' {
     'containers.inspect': { input: { id: string }; output: { json: string } }
     /** Opens an Orca terminal following the container's logs. */
     'containers.logs': { input: { id: string; name: string }; output: { terminalId: string } }
+    /** Runs `docker compose -p <project> <action>`; compose keeps the start/stop order. */
+    'compose.action': { input: { project: string; action: ComposeAction }; output: { ok: true } }
+    /** Opens an Orca terminal following the logs of every service in the project. */
+    'compose.logs': { input: { project: string }; output: { terminalId: string } }
   }
   interface PluginPanelEvents {
     /** A container started, stopped, was created or removed. The panel reloads the list. */

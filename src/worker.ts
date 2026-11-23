@@ -5,11 +5,12 @@ import { createDockerClient } from './docker/client'
 import { resolveEndpoint } from './docker/endpoint'
 import { createEventWatcher, type EventWatcher } from './docker/events'
 import type { WorkerContext } from './features/context'
+import { registerCompose } from './features/containers/compose'
 import { registerContainers } from './features/containers/handlers'
 import { registerImages } from './features/images/handlers'
 
 /** Add a feature here (and its section in src/panel/main.ts). */
-const FEATURES: ((context: WorkerContext) => void)[] = [registerContainers, registerImages]
+const FEATURES: ((context: WorkerContext) => void)[] = [registerContainers, registerCompose, registerImages]
 
 let watcher: EventWatcher | null = null
 

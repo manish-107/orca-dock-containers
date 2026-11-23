@@ -2,11 +2,11 @@
 import type { MenuItem } from '../../ui/context-menu'
 import { confirmDialog } from '../../ui/confirm'
 import { showDetails } from '../../ui/details'
-import { attempt } from '../../ui/notice'
+import { attempt, showInfo } from '../../ui/notice'
 import type { SectionContext, SectionSpec } from '../../ui/section'
 import type { TreeNode } from '../../ui/tree'
 import { actionsFor, groupByProject, toneOf } from './model'
-import type { ContainerAction, ContainerSummary } from './types'
+import type { ComposeAction, ContainerAction, ContainerSummary } from './types'
 
 const ACTION_LABELS: Record<ContainerAction, string> = { start: 'Start', stop: 'Stop', restart: 'Restart' }
 
@@ -24,10 +24,50 @@ export function containersSection(): SectionSpec {
         label: group.label,
         icon: 'group' as const,
         defaultExpanded: true,
+        menu: group.project === null ? undefined : () => composeMenu(group.project as string, context),
         children: group.containers.map((container) => containerNode(container, context))
       }))
     }
   }
+}
+
+const COMPOSE_PROGRESS: Record<ComposeAction, string> = {
+  start: 'Starting',
+  stop: 'Stopping',
+  restart: 'Restarting',
+  down: 'Taking down'
+}
+
+/** Right-click on a Compose project, as in VS Code: Logs | Start, Stop | Restart, Down. */
+function composeMenu(project: string, context: SectionContext): MenuItem[] {
+  const run = (action: ComposeAction) =>
+    attempt(async () => {
+      if (
+        action === 'down' &&
+        !(await confirmDialog(
+          `Run "compose down" on "${project}"? Its containers and networks are removed; volumes are kept.`,
+          'Compose Down'
+        ))
+      ) {
+        return
+      }
+      const hide = showInfo(`${COMPOSE_PROGRESS[action]} ${project}…`)
+      try {
+        await orca.plugin.request('compose.action', { project, action }, { timeoutMs: 120_000 })
+      } finally {
+        hide()
+        context.reload()
+      }
+    })
+  return [
+    { label: 'Compose Logs', run: () => attempt(() => orca.plugin.request('compose.logs', { project })) },
+    'separator',
+    { label: 'Compose Start', run: () => run('start') },
+    { label: 'Compose Stop', run: () => run('stop') },
+    'separator',
+    { label: 'Compose Restart', run: () => run('restart') },
+    { label: 'Compose Down…', danger: true, run: () => run('down') }
+  ]
 }
 
 function containerNode(container: ContainerSummary, context: SectionContext): TreeNode {

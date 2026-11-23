@@ -245,3 +245,4 @@ button:focus-visible { outline: 1px solid var(--ring); outline-offset: 1px; }
   user-select: text;
   cursor: pointer;
 }
+.notice.info { border-color: var(--border); }

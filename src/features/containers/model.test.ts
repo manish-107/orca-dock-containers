@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { actionsFor, groupByProject, isContainerId, NO_PROJECT_LABEL, toneOf, toSummary } from './model'
+import {
+  actionsFor,
+  composeArgs,
+  groupByProject,
+  isContainerId,
+  isProjectName,
+  NO_PROJECT_LABEL,
+  toneOf,
+  toSummary
+} from './model'
 import type { ContainerSummary } from './types'
 
 const ID = 'a'.repeat(64)
@@ -45,6 +54,23 @@ test('tone and actions follow the state', () => {
   assert.equal(toneOf(container({ state: 'exited' })), 'bad')
   assert.deepEqual(actionsFor(container({ state: 'running' })), ['stop', 'restart'])
   assert.deepEqual(actionsFor(container({ state: 'exited' })), ['start'])
+})
+
+test('groups carry their compose project; lone containers have none', () => {
+  const groups = groupByProject([container({ project: 'local-dev' }), container({ project: null })])
+  assert.deepEqual(groups.map((g) => g.project), ['local-dev', null])
+})
+
+test('compose commands ignore any compose file in the current folder', () => {
+  assert.deepEqual(composeArgs('local-dev', 'down'), ['compose', '--project-directory', '/', '-p', 'local-dev', 'down'])
+})
+
+test('isProjectName accepts compose names only', () => {
+  assert.equal(isProjectName('local-dev'), true)
+  assert.equal(isProjectName('my_app2'), true)
+  assert.equal(isProjectName('Local Dev'), false)
+  assert.equal(isProjectName('x; rm -rf /'), false)
+  assert.equal(isProjectName('-p'), false)
 })
 
 test('isContainerId accepts hex ids only', () => {

@@ -26,7 +26,8 @@ export function toSummary(raw: RawContainer): ContainerSummary {
   }
 }
 
-export type ContainerGroup = { key: string; label: string; containers: ContainerSummary[] }
+/** `project` is null for the "Individual Containers" group. */
+export type ContainerGroup = { key: string; label: string; project: string | null; containers: ContainerSummary[] }
 
 /** Compose projects A–Z, then containers without a project, as Cursor's Docker view shows them. */
 export function groupByProject(containers: readonly ContainerSummary[]): ContainerGroup[] {
@@ -40,6 +41,7 @@ export function groupByProject(containers: readonly ContainerSummary[]): Contain
     .map(([key, list]) => ({
       key: key === '' ? 'container-group:none' : `container-group:${key}`,
       label: key === '' ? NO_PROJECT_LABEL : key,
+      project: key === '' ? null : key,
       containers: [...list].sort((a, b) => a.image.localeCompare(b.image))
     }))
 }
@@ -57,6 +59,22 @@ export function actionsFor(container: ContainerSummary): ContainerAction[] {
   return container.state === 'running' || container.state === 'restarting' || container.state === 'paused'
     ? ['stop', 'restart']
     : ['start']
+}
+
+/** Compose project names: lowercase letters, digits, dashes and underscores. */
+const PROJECT_NAME = /^[a-z0-9][a-z0-9_-]{0,127}$/
+
+export function isProjectName(value: unknown): value is string {
+  return typeof value === 'string' && PROJECT_NAME.test(value)
+}
+
+/**
+ * `docker compose` arguments for a project by name alone. `--project-directory /` stops compose
+ * from loading an unrelated compose.yaml in the current folder, so it acts only on the project's
+ * existing containers.
+ */
+export function composeArgs(project: string, ...command: string[]): string[] {
+  return ['compose', '--project-directory', '/', '-p', project, ...command]
 }
 
 const CONTAINER_ID = /^[0-9a-f]{12,64}$/
