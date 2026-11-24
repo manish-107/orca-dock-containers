@@ -1,4 +1,17 @@
-/* Colours come from Orca's theme (--orca-*), so the panel follows light/dark and custom themes. */
+/* Colours and fonts come from Orca's theme (--orca-*), so the panel follows light/dark, custom
+   themes and Orca's App Font setting. */
+
+/* Orca's default App Font is Geist, which Orca loads inside its own window, so the panel frame
+   can't see it. This copy lets the "Geist" name in --orca-font-sans resolve; any other App Font
+   is used as is. The browser downloads it only when the font list names Geist. OFL: fonts/OFL.txt. */
+@font-face {
+  font-family: 'Geist';
+  src: url('./fonts/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg: var(--orca-background, #1e1e1e);
   --fg: var(--orca-foreground, #cccccc);
@@ -33,7 +46,7 @@ body {
 body {
   background: var(--bg);
   color: var(--fg);
-  font: 13px/1.4 var(--orca-font-sans, system-ui, sans-serif);
+  font: 13px/1.4 var(--orca-font-sans, 'Geist', system-ui, sans-serif);
   overflow: hidden;
   user-select: none;
 }
