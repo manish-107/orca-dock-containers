@@ -4,6 +4,7 @@ import { confirmDialog } from '../../ui/confirm'
 import { showDetails } from '../../ui/details'
 import { attempt, showInfo } from '../../ui/notice'
 import type { SectionContext, SectionSpec } from '../../ui/section'
+import type { LogsTerminal } from '../logs-terminal'
 import type { TreeNode } from '../../ui/tree'
 import { actionsFor, groupByProject, toneOf } from './model'
 import type { ComposeAction, ContainerAction, ContainerSummary } from './types'
@@ -60,7 +61,7 @@ function composeMenu(project: string, context: SectionContext): MenuItem[] {
       }
     })
   return [
-    { label: 'Compose Logs', run: () => attempt(() => orca.plugin.request('compose.logs', { project })) },
+    { label: 'Compose Logs', run: () => attempt(async () => whereLogsOpened(await orca.plugin.request('compose.logs', { project }))) },
     'separator',
     { label: 'Compose Start', run: () => run('start') },
     { label: 'Compose Stop', run: () => run('stop') },
@@ -68,6 +69,11 @@ function composeMenu(project: string, context: SectionContext): MenuItem[] {
     { label: 'Compose Restart', run: () => run('restart') },
     { label: 'Compose Down…', danger: true, run: () => run('down') }
   ]
+}
+
+/** Orca could not bring the logs tab forward, so say where it is. */
+function whereLogsOpened({ focused, workspace }: LogsTerminal): void {
+  if (!focused) showInfo(`Logs are open in a terminal tab of "${workspace}".`, 5_000)
 }
 
 function containerNode(container: ContainerSummary, context: SectionContext): TreeNode {
@@ -85,7 +91,10 @@ function containerMenu(container: ContainerSummary, context: SectionContext): Me
   const { id, name } = container
   const running = container.state !== 'exited' && container.state !== 'created' && container.state !== 'dead'
   return [
-    { label: 'View Logs', run: () => attempt(() => orca.plugin.request('containers.logs', { id, name })) },
+    {
+      label: 'View Logs',
+      run: () => attempt(async () => whereLogsOpened(await orca.plugin.request('containers.logs', { id, name })))
+    },
     {
       label: 'Inspect',
       run: () =>

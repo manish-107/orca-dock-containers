@@ -5,9 +5,10 @@ export function showError(error: unknown): void {
   show(error instanceof Error ? error.message : String(error), 'error', 8_000)
 }
 
-/** A progress line such as "Starting local-dev…"; returns a function that hides it. */
-export function showInfo(message: string): () => void {
-  const element = show(message, 'info', 0)
+/** A progress line such as "Starting local-dev…"; returns a function that hides it. With
+ *  `hideAfterMs` it also hides itself. */
+export function showInfo(message: string, hideAfterMs = 0): () => void {
+  const element = show(message, 'info', hideAfterMs)
   return () => {
     if (element.isConnected && element.textContent === message) element.remove()
   }

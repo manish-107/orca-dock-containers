@@ -1,4 +1,5 @@
 // Containers: the panel <-> worker contract for this feature.
+import type { LogsTerminal } from '../logs-terminal'
 export type ContainerSummary = {
   /** Full 64-character id. */
   id: string
@@ -25,12 +26,13 @@ declare module 'orca' {
     'containers.remove': { input: { id: string; force: boolean }; output: { ok: true } }
     /** `docker inspect` as pretty-printed JSON. */
     'containers.inspect': { input: { id: string }; output: { json: string } }
-    /** Opens an Orca terminal following the container's logs. */
-    'containers.logs': { input: { id: string; name: string }; output: { terminalId: string } }
+    /** Opens (or brings back) an Orca terminal following the container's logs. `focused` is false
+     *  when Orca left it in the background of `workspace`. */
+    'containers.logs': { input: { id: string; name: string }; output: LogsTerminal }
     /** Runs `docker compose -p <project> <action>`; compose keeps the start/stop order. */
     'compose.action': { input: { project: string; action: ComposeAction }; output: { ok: true } }
-    /** Opens an Orca terminal following the logs of every service in the project. */
-    'compose.logs': { input: { project: string }; output: { terminalId: string } }
+    /** Same as containers.logs, for every service in the project. */
+    'compose.logs': { input: { project: string }; output: LogsTerminal }
   }
   interface PluginPanelEvents {
     /** A container started, stopped, was created or removed. The panel reloads the list. */

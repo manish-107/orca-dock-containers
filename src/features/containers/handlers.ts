@@ -2,6 +2,7 @@
 import { debounce } from '../../docker/events'
 import { DockerError } from '../../docker/errors'
 import type { WorkerContext } from '../context'
+import { openLogsTerminal } from '../logs-terminal'
 import { isContainerId, toSummary, type RawContainer } from './model'
 import type { ContainerAction } from './types'
 
@@ -41,20 +42,6 @@ export function registerContainers({ orca, docker, events }: WorkerContext): voi
   // Logs run in an Orca terminal, like Cursor's "View Logs": the panel never holds log text.
   orca.panels.handle('containers.logs', async ({ id, name }) => {
     const safeId = checkId(id)
-    const context = await orca.host.call('workspace.readContext')
-    if (!context?.workspaceId) {
-      throw new DockerError('Open a workspace in Orca first; logs open in one of its terminals.', 'unavailable')
-    }
-    const { terminalId } = await orca.host.call('terminal.create', {
-      workspaceId: context.workspaceId,
-      title: `logs: ${String(name).slice(0, 60)}`,
-      command: `docker logs -f --tail 200 ${safeId}`
-    })
-    try {
-      await orca.host.call('terminal.focus', { terminalId })
-    } catch {
-      // Older Orca, or a browser client: the terminal still opened in the background.
-    }
-    return { terminalId }
+    return openLogsTerminal(orca, `container:${safeId}`, `logs: ${String(name)}`, `docker logs -f --tail 200 ${safeId}`)
   })
 }

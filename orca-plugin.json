@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "dock-containers",
   "name": "Docker Containers",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Docker containers and images in Orca's sidebar, like VS Code's Docker view: grouped by Compose project, with start, stop, restart, logs, inspect and remove from a right-click menu.",
   "engines": {
     "orca": ">=1.4.259"

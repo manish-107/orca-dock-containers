@@ -3,6 +3,7 @@
 import { execFile } from 'node:child_process'
 import { DockerError } from '../../docker/errors'
 import type { WorkerContext } from '../context'
+import { openLogsTerminal } from '../logs-terminal'
 import { composeArgs, isProjectName } from './model'
 import type { ComposeAction } from './types'
 
@@ -36,20 +37,11 @@ export function registerCompose({ orca }: WorkerContext): void {
 
   orca.panels.handle('compose.logs', async ({ project }) => {
     const name = checkProject(project)
-    const context = await orca.host.call('workspace.readContext')
-    if (!context?.workspaceId) {
-      throw new DockerError('Open a workspace in Orca first; logs open in one of its terminals.', 'unavailable')
-    }
-    const { terminalId } = await orca.host.call('terminal.create', {
-      workspaceId: context.workspaceId,
-      title: `logs: ${name}`,
-      command: ['docker', ...composeArgs(name, 'logs', '-f', '--tail', '200')].join(' ')
-    })
-    try {
-      await orca.host.call('terminal.focus', { terminalId })
-    } catch {
-      // Older Orca, or a browser client: the terminal still opened in the background.
-    }
-    return { terminalId }
+    return openLogsTerminal(
+      orca,
+      `compose:${name}`,
+      `logs: ${name}`,
+      ['docker', ...composeArgs(name, 'logs', '-f', '--tail', '200')].join(' ')
+    )
   })
 }
